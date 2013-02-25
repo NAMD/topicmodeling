@@ -19,6 +19,7 @@
 import sys, re, time, string
 import numpy as np
 from scipy.special import gammaln, psi
+from collections import defaultdict
 
 np.random.seed(100000001)
 meanchangethresh = 0.001
@@ -27,6 +28,9 @@ meanchangethresh = 0.001
 def dirichlet_expectation(alpha):
     """
     For a vector theta ~ Dir(alpha), computes E[log(theta)] given alpha.
+    :parameter:
+    :alpha: vector of probabilities
+    :Return: E[log(theta)]
     """
     if alpha.ndim == 1:
         return psi(alpha) - psi(np.sum(alpha))
@@ -39,13 +43,13 @@ def parse_doc_list(docs, vocab):
     or parse a set of documents into two lists of lists of word ids
     and counts.
 
-    Arguments: 
-    docs:  List of D documents. Each document must be represented as
+    :Parameters:
+    :docs:  List of D documents. Each document must be represented as
            a single string. (Word order is unimportant.) Any
            words not in the vocabulary will be ignored.
-    vocab: Dictionary mapping from words to integer ids.
+    :vocab: Dictionary mapping from words to integer ids.
 
-    Returns a pair of lists of lists. 
+    :Return: a pair of lists of lists.
 
     The first, wordids, says what vocabulary tokens are present in
     each document. wordids[i][j] gives the jth unique token present in
@@ -56,32 +60,30 @@ def parse_doc_list(docs, vocab):
     present. wordcts[i][j] is the number of times that the token given
     by wordids[i][j] appears in document i.
     """
-    if (type(docs).__name__ == 'str'):
-        temp = list()
-        temp.append(docs)
-        docs = temp
+    if isinstance(docs, str):
+        docs = [docs]
 
     D = len(docs)
+    #Makesure vocabulary is also converted to lower case
+    vocab = {k.lower(): v for k, v in vocab.iteritems()}
     
-    wordids = list()
-    wordcts = list()
-    for d in range(0, D):
-        docs[d] = docs[d].lower()
-        docs[d] = re.sub(r'-', ' ', docs[d])
-        docs[d] = re.sub(r'[^a-z ]', '', docs[d])
-        docs[d] = re.sub(r' +', ' ', docs[d])
-        words = string.split(docs[d])
-        ddict = dict()
+    wordids = []
+    wordcts = []
+    for d in docs:
+        d = d.lower()
+        d = re.sub(r'-', ' ', d)
+        d = re.sub(r'[^a-z ]', '', d)
+        d = re.sub(r' +', ' ', d)
+        words = d.split()
+        ddict = defaultdict(lambda: 0)
         for word in words:
-            if (word in vocab):
+            if word in vocab:
                 wordtoken = vocab[word]
-                if (not wordtoken in ddict):
-                    ddict[wordtoken] = 0
                 ddict[wordtoken] += 1
         wordids.append(ddict.keys())
         wordcts.append(ddict.values())
 
-    return((wordids, wordcts))
+    return wordids, wordcts
 
 class OnlineLDA:
     """
