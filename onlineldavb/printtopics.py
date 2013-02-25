@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, os, re, random, math, urllib2, time, cPickle
+import sys
 import numpy
 
 import onlineldavb
@@ -39,7 +39,7 @@ def main():
         temp = sorted(temp, key = lambda x: x[0], reverse=True)
         print 'topic %d:' % (k)
         # feel free to change the "53" here to whatever fits your screen nicely.
-        for i in range(0, 53):
+        for i in xrange(0, 53):
             print '%20s  \t---\t  %.4f' % (vocab[temp[i][1]], temp[i][0])
         print
 

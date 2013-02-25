@@ -23,6 +23,7 @@ import cPickle, string, numpy, getopt, sys, random, time, re, pprint
 import onlineldavb
 import wikirandom
 
+
 def main():
     """
     Downloads and analyzes a bunch of random Wikipedia articles using
@@ -37,7 +38,7 @@ def main():
     K = 100
 
     # How many documents to look at
-    if (len(sys.argv) < 2):
+    if len(sys.argv) < 2:
         documentstoanalyze = int(D/batchsize)
     else:
         documentstoanalyze = int(sys.argv[1])
@@ -52,12 +53,12 @@ def main():
     # sooner than this.)
     for iteration in range(0, documentstoanalyze):
         # Download some articles
-        (docset, articlenames) = \
+        docset, articlenames = \
             wikirandom.get_random_wikipedia_articles(batchsize)
         # Give them to online LDA
-        (gamma, bound) = olda.update_lambda(docset)
+        gamma, bound = olda.update_lambda(docset)
         # Compute an estimate of held-out perplexity
-        (wordids, wordcts) = onlineldavb.parse_doc_list(docset, olda._vocab)
+        wordids, wordcts = onlineldavb.parse_doc_list(docset, olda._vocab)
         perwordbound = bound * len(docset) / (D * sum(map(sum, wordcts)))
         print '%d:  rho_t = %f,  held-out perplexity estimate = %f' % \
             (iteration, olda._rhot, numpy.exp(-perwordbound))
@@ -66,7 +67,7 @@ def main():
         # over topics, and gamma, the parameters to the variational
         # distributions over topic weights for the articles analyzed in
         # the last iteration.
-        if (iteration % 10 == 0):
+        if iteration % 10 == 0:
             numpy.savetxt('lambda-%d.dat' % iteration, olda._lambda)
             numpy.savetxt('gamma-%d.dat' % iteration, gamma)
 

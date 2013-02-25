@@ -85,6 +85,7 @@ def parse_doc_list(docs, vocab):
 
     return wordids, wordcts
 
+
 class OnlineLDA:
     """
     Implements online VB for LDA as described in (Hoffman et al. 2010).
@@ -92,27 +93,25 @@ class OnlineLDA:
 
     def __init__(self, vocab, K, D, alpha, eta, tau0, kappa):
         """
-        Arguments:
-        K: Number of topics
-        vocab: A set of words to recognize. When analyzing documents, any word
+        :param vocab: A set of words to recognize. When analyzing documents, any word
            not in this set will be ignored.
-        D: Total number of documents in the population. For a fixed corpus,
+        :param K: Number of topics
+        :param D: Total number of documents in the population. For a fixed corpus,
            this is the size of the corpus. In the truly online setting, this
            can be an estimate of the maximum number of documents that
            could ever be seen.
-        alpha: Hyperparameter for prior on weight vectors theta
-        eta: Hyperparameter for prior on topics beta
-        tau0: A (positive) learning parameter that downweights early iterations
-        kappa: Learning rate: exponential decay rate---should be between
+        :param alpha:  Hyperparameter for prior on weight vectors theta
+        :param eta: Hyperparameter for prior on topics beta
+        :param tau0: A (positive) learning parameter that downweights early iterations
+        :param kappa: Learning rate: exponential decay rate---should be between
              (0.5, 1.0] to guarantee asymptotic convergence.
 
         Note that if you pass the same set of D documents in every time and
         set kappa=0 this class can also be used to do batch VB.
         """
-        self._vocab = dict()
+        self._vocab = {}
         for word in vocab:
-            word = word.lower()
-            word = re.sub(r'[^a-z]', '', word)
+            word = re.sub(r'[^a-z]', '', word.lower())
             self._vocab[word] = len(self._vocab)
 
         self._K = K
@@ -135,8 +134,7 @@ class OnlineLDA:
         gamma controlling the variational distribution over the topic
         weights for each document in the mini-batch.
 
-        Arguments:
-        docs:  List of D documents. Each document must be represented
+        :param docs:  List of D documents. Each document must be represented
                as a string. (Word order is unimportant.) Any
                words not in the vocabulary will be ignored.
 
@@ -145,12 +143,10 @@ class OnlineLDA:
         """
         # This is to handle the case where someone just hands us a single
         # document, not in a list.
-        if (type(docs).__name__ == 'string'):
-            temp = list()
-            temp.append(docs)
-            docs = temp
+        if isinstance(docs, str):
+            docs = [docs]
 
-        (wordids, wordcts) = parse_doc_list(docs, self._vocab)
+        wordids, wordcts = parse_doc_list(docs, self._vocab)
         batchD = len(docs)
 
         # Initialize the variational distribution q(theta|gamma) for
@@ -187,7 +183,7 @@ class OnlineLDA:
                 phinorm = np.dot(expElogthetad, expElogbetad) + 1e-100
                 # If gamma hasn't changed much, we're done.
                 meanchange = np.mean(abs(gammad - lastgamma))
-                if (meanchange < meanchangethresh):
+                if meanchange < meanchangethresh:
                     break
             gamma[d, :] = gammad
             # Contribution of document d to the expected sufficient
@@ -200,7 +196,7 @@ class OnlineLDA:
         # = \sum_d n_{dw} * exp{Elogtheta_{dk} + Elogbeta_{kw}} / phinorm_{dw}.
         sstats = sstats * self._expElogbeta
 
-        return((gamma, sstats))
+        return gamma, sstats
 
     def update_lambda(self, docs):
         """
@@ -208,8 +204,7 @@ class OnlineLDA:
         wordcts, then uses the result of that E step to update the
         variational parameter matrix lambda.
 
-        Arguments:
-        docs:  List of D documents. Each document must be represented
+        :param docs:  List of D documents. Each document must be represented
                as a string. (Word order is unimportant.) Any
                words not in the vocabulary will be ignored.
 
@@ -240,7 +235,7 @@ class OnlineLDA:
         self._expElogbeta = np.exp(self._Elogbeta)
         self._updatect += 1
 
-        return(gamma, bound)
+        return gamma, bound
 
     def approx_bound(self, docs, gamma):
         """
@@ -255,12 +250,10 @@ class OnlineLDA:
 
         # This is to handle the case where someone just hands us a single
         # document, not in a list.
-        if (type(docs).__name__ == 'string'):
-            temp = list()
-            temp.append(docs)
-            docs = temp
+        if isinstance(docs, str):
+            docs = [docs]
 
-        (wordids, wordcts) = parse_doc_list(docs, self._vocab)
+        wordids, wordcts = parse_doc_list(docs, self._vocab)
         batchD = len(docs)
 
         score = 0
@@ -298,4 +291,4 @@ class OnlineLDA:
         score = score + np.sum(gammaln(self._eta*self._W) -
                               gammaln(np.sum(self._lambda, 1)))
 
-        return(score)
+        return score
