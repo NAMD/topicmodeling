@@ -49,3 +49,14 @@ class TestOnlineLDA(unittest.TestCase):
         self.assertIsInstance(ids[0][0], int)
         self.assertIsInstance(cts[0][0], int)
 
+    def test_parse_docs_returning_the_right_types_multiple_docs(self):
+        with open('data/sampledoc') as f:
+            doc = f.read()
+        vocab = {w: n for n, w in enumerate(doc.split())}
+        docs = [' '.join(random.sample(vocab.keys(), 20)) for i in range(15)]
+        ids, cts = onlineldavb.parse_doc_list(docs, vocab)
+        self.assertIsInstance(ids, list)
+        self.assertIsInstance(cts, list)
+        self.assertIsInstance(ids[0][0], int)
+        self.assertIsInstance(cts[0][0], int)
+
