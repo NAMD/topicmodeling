@@ -17,19 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys, re, time, string
-import numpy as n
+import numpy as np
 from scipy.special import gammaln, psi
 
-n.random.seed(100000001)
+np.random.seed(100000001)
 meanchangethresh = 0.001
+
 
 def dirichlet_expectation(alpha):
     """
     For a vector theta ~ Dir(alpha), computes E[log(theta)] given alpha.
     """
-    if (len(alpha.shape) == 1):
-        return(psi(alpha) - psi(n.sum(alpha)))
-    return(psi(alpha) - psi(n.sum(alpha, 1))[:, n.newaxis])
+    if alpha.ndim == 1:
+        return psi(alpha) - psi(np.sum(alpha))
+    return psi(alpha) - psi(np.sum(alpha, 1))[:, np.newaxis]
+
 
 def parse_doc_list(docs, vocab):
     """
@@ -121,9 +123,9 @@ class OnlineLDA:
         self._updatect = 0
 
         # Initialize the variational distribution q(beta|lambda)
-        self._lambda = 1*n.random.gamma(100., 1./100., (self._K, self._W))
+        self._lambda = 1*np.random.gamma(100., 1./100., (self._K, self._W))
         self._Elogbeta = dirichlet_expectation(self._lambda)
-        self._expElogbeta = n.exp(self._Elogbeta)
+        self._expElogbeta = np.exp(self._Elogbeta)
 
     def do_e_step(self, docs):
         """
@@ -151,11 +153,11 @@ class OnlineLDA:
 
         # Initialize the variational distribution q(theta|gamma) for
         # the mini-batch
-        gamma = 1*n.random.gamma(100., 1./100., (batchD, self._K))
+        gamma = 1*np.random.gamma(100., 1./100., (batchD, self._K))
         Elogtheta = dirichlet_expectation(gamma)
-        expElogtheta = n.exp(Elogtheta)
+        expElogtheta = np.exp(Elogtheta)
 
-        sstats = n.zeros(self._lambda.shape)
+        sstats = np.zeros(self._lambda.shape)
         # Now, for each document d update that document's gamma and phi
         it = 0
         meanchange = 0
@@ -169,7 +171,7 @@ class OnlineLDA:
             expElogbetad = self._expElogbeta[:, ids]
             # The optimal phi_{dwk} is proportional to 
             # expElogthetad_k * expElogbetad_w. phinorm is the normalizer.
-            phinorm = n.dot(expElogthetad, expElogbetad) + 1e-100
+            phinorm = np.dot(expElogthetad, expElogbetad) + 1e-100
             # Iterate between gamma and phi until convergence
             for it in range(0, 100):
                 lastgamma = gammad
@@ -177,18 +179,18 @@ class OnlineLDA:
                 # Substituting the value of the optimal phi back into
                 # the update for gamma gives this update. Cf. Lee&Seung 2001.
                 gammad = self._alpha + expElogthetad * \
-                    n.dot(cts / phinorm, expElogbetad.T)
+                    np.dot(cts / phinorm, expElogbetad.T)
                 Elogthetad = dirichlet_expectation(gammad)
-                expElogthetad = n.exp(Elogthetad)
-                phinorm = n.dot(expElogthetad, expElogbetad) + 1e-100
+                expElogthetad = np.exp(Elogthetad)
+                phinorm = np.dot(expElogthetad, expElogbetad) + 1e-100
                 # If gamma hasn't changed much, we're done.
-                meanchange = n.mean(abs(gammad - lastgamma))
+                meanchange = np.mean(abs(gammad - lastgamma))
                 if (meanchange < meanchangethresh):
                     break
             gamma[d, :] = gammad
             # Contribution of document d to the expected sufficient
             # statistics for the M step.
-            sstats[:, ids] += n.outer(expElogthetad.T, cts/phinorm)
+            sstats[:, ids] += np.outer(expElogthetad.T, cts/phinorm)
 
         # This step finishes computing the sufficient statistics for the
         # M step, so that
@@ -233,7 +235,7 @@ class OnlineLDA:
         self._lambda = self._lambda * (1-rhot) + \
             rhot * (self._eta + self._D * sstats / len(docs))
         self._Elogbeta = dirichlet_expectation(self._lambda)
-        self._expElogbeta = n.exp(self._Elogbeta)
+        self._expElogbeta = np.exp(self._Elogbeta)
         self._updatect += 1
 
         return(gamma, bound)
@@ -261,19 +263,19 @@ class OnlineLDA:
 
         score = 0
         Elogtheta = dirichlet_expectation(gamma)
-        expElogtheta = n.exp(Elogtheta)
+        expElogtheta = np.exp(Elogtheta)
 
         # E[log p(docs | theta, beta)]
         for d in range(0, batchD):
             gammad = gamma[d, :]
             ids = wordids[d]
-            cts = n.array(wordcts[d])
-            phinorm = n.zeros(len(ids))
+            cts = np.array(wordcts[d])
+            phinorm = np.zeros(len(ids))
             for i in range(0, len(ids)):
                 temp = Elogtheta[d, :] + self._Elogbeta[:, ids[i]]
                 tmax = max(temp)
-                phinorm[i] = n.log(sum(n.exp(temp - tmax))) + tmax
-            score += n.sum(cts * phinorm)
+                phinorm[i] = np.log(sum(np.exp(temp - tmax))) + tmax
+            score += np.sum(cts * phinorm)
 #             oldphinorm = phinorm
 #             phinorm = n.dot(expElogtheta[d, :], self._expElogbeta[:, ids])
 #             print oldphinorm
@@ -281,17 +283,17 @@ class OnlineLDA:
 #             score += n.sum(cts * n.log(phinorm))
 
         # E[log p(theta | alpha) - log q(theta | gamma)]
-        score += n.sum((self._alpha - gamma)*Elogtheta)
-        score += n.sum(gammaln(gamma) - gammaln(self._alpha))
-        score += sum(gammaln(self._alpha*self._K) - gammaln(n.sum(gamma, 1)))
+        score += np.sum((self._alpha - gamma)*Elogtheta)
+        score += np.sum(gammaln(gamma) - gammaln(self._alpha))
+        score += sum(gammaln(self._alpha*self._K) - gammaln(np.sum(gamma, 1)))
 
         # Compensate for the subsampling of the population of documents
         score = score * self._D / len(docs)
 
         # E[log p(beta | eta) - log q (beta | lambda)]
-        score = score + n.sum((self._eta-self._lambda)*self._Elogbeta)
-        score = score + n.sum(gammaln(self._lambda) - gammaln(self._eta))
-        score = score + n.sum(gammaln(self._eta*self._W) - 
-                              gammaln(n.sum(self._lambda, 1)))
+        score = score + np.sum((self._eta-self._lambda)*self._Elogbeta)
+        score = score + np.sum(gammaln(self._lambda) - gammaln(self._eta))
+        score = score + np.sum(gammaln(self._eta*self._W) -
+                              gammaln(np.sum(self._lambda, 1)))
 
         return(score)
