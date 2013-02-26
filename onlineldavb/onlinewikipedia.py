@@ -18,7 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import cPickle, string, numpy, getopt, sys, random, time, re, pprint
+import numpy
+from sys import argv
 
 import onlineldavb
 import wikirandom
@@ -38,10 +39,10 @@ def main():
     K = 100
 
     # How many documents to look at
-    if len(sys.argv) < 2:
+    if len(argv) < 2:
         documentstoanalyze = int(D/batchsize)
     else:
-        documentstoanalyze = int(sys.argv[1])
+        documentstoanalyze = int(argv[1])
 
     # Our vocabulary
     vocab = file('./dictnostops.txt').readlines()
@@ -68,8 +69,9 @@ def main():
         # distributions over topic weights for the articles analyzed in
         # the last iteration.
         if iteration % 10 == 0:
-            numpy.savetxt('lambda-%d.dat' % iteration, olda._lambda)
-            numpy.savetxt('gamma-%d.dat' % iteration, gamma)
+            print "Iteration: ", iteration
+            numpy.savetxt('lambda.dat', olda._lambda)
+            numpy.savetxt('gamma.dat', gamma)
 
 if __name__ == '__main__':
     main()

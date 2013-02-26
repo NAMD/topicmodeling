@@ -10,6 +10,10 @@ import random
 
 
 class TestOnlineLDA(unittest.TestCase):
+    def setUp(self):
+        with open('data/sampledoc') as f:
+            self.sampledoc = f.read()
+
     def test_dirichlet_expectation_unidimensional(self):
         """
         Check if expectation is calculated correctly.
@@ -39,9 +43,7 @@ class TestOnlineLDA(unittest.TestCase):
         npt.assert_array_equal(e, onlineldavb.dirichlet_expectation(alpha))
 
     def test_parse_docs_returning_the_right_types_single_doc(self):
-        with open('data/sampledoc') as f:
-            doc = f.read()
-        vocab = {w: n for n, w in enumerate(doc.split())}
+        vocab = {w: n for n, w in enumerate(self.sampledoc.split())}
         docs = [' '.join(random.sample(vocab.keys(), 20)) for i in range(1)]
         ids, cts = onlineldavb.parse_doc_list(docs, vocab)
         self.assertIsInstance(ids, list)
@@ -50,13 +52,21 @@ class TestOnlineLDA(unittest.TestCase):
         self.assertIsInstance(cts[0][0], int)
 
     def test_parse_docs_returning_the_right_types_multiple_docs(self):
-        with open('data/sampledoc') as f:
-            doc = f.read()
-        vocab = {w: n for n, w in enumerate(doc.split())}
+        vocab = {w: n for n, w in enumerate(self.sampledoc.split())}
         docs = [' '.join(random.sample(vocab.keys(), 20)) for i in range(15)]
         ids, cts = onlineldavb.parse_doc_list(docs, vocab)
         self.assertIsInstance(ids, list)
         self.assertIsInstance(cts, list)
         self.assertIsInstance(ids[0][0], int)
         self.assertIsInstance(cts[0][0], int)
+
+    def test_olda_update_lambda(self):
+        vocab = {w: n for n, w in enumerate(self.sampledoc.split())}
+        docs = [' '.join(random.sample(vocab.keys(), 20)) for i in xrange(64)]
+        K = 5
+        D = 64
+        olda = onlineldavb.OnlineLDA(vocab, K, D, 1./K, 1./K, 1024., 0.7)
+        gamma, bound = olda.update_lambda(docs)
+        self. assertIsInstance(gamma, float)
+        self. assertIsInstance(bound, float)
 

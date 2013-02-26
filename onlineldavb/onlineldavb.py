@@ -20,10 +20,11 @@ import sys, re, time, string
 import numpy as np
 from scipy.special import gammaln, psi
 from collections import defaultdict
+from multiprocessing import Pool
 
 np.random.seed(100000001)
 meanchangethresh = 0.001
-
+Gvocab = {}
 
 def dirichlet_expectation(alpha):
     """
@@ -36,6 +37,24 @@ def dirichlet_expectation(alpha):
         return psi(alpha) - psi(np.sum(alpha))
     return psi(alpha) - psi(np.sum(alpha, 1))[:, np.newaxis]
 
+
+def parsed(d):
+    """
+    Extracted to allow parallelization.
+    :param d: Document to be parsed
+    :return:
+    """
+    d = d.lower()
+    d = re.sub(r'-', ' ', d)
+    d = re.sub(r'[^a-z ]', '', d)
+    d = re.sub(r' +', ' ', d)
+    words = d.split()
+    ddict = {}
+    for word in words:
+        if word in Gvocab:
+            wordtoken = Gvocab[word]
+            ddict[wordtoken] = ddict.get(wordtoken, 0) + 1
+    return ddict
 
 def parse_doc_list(docs, vocab):
     """
@@ -60,28 +79,38 @@ def parse_doc_list(docs, vocab):
     present. wordcts[i][j] is the number of times that the token given
     by wordids[i][j] appears in document i.
     """
+    global Gvocab
     if isinstance(docs, str):
         docs = [docs]
 
     D = len(docs)
     #Makesure vocabulary is also converted to lower case
-    vocab = {k.lower(): v for k, v in vocab.iteritems()}
+    Gvocab = {k.lower(): v for k, v in vocab.iteritems()}
+
+    po = Pool()
     
     wordids = []
     wordcts = []
-    for d in docs:
-        d = d.lower()
-        d = re.sub(r'-', ' ', d)
-        d = re.sub(r'[^a-z ]', '', d)
-        d = re.sub(r' +', ' ', d)
-        words = d.split()
-        ddict = defaultdict(lambda: 0)
-        for word in words:
-            if word in vocab:
-                wordtoken = vocab[word]
-                ddict[wordtoken] += 1
-        wordids.append(ddict.keys())
-        wordcts.append(ddict.values())
+
+    res = po.map(parsed, docs)
+    wordids = [d.keys() for d in res]
+    wordcts = [d.values() for d in res]
+
+    po.close()
+    po.join()
+    # for d in docs:
+        # d = d.lower()
+        # d = re.sub(r'-', ' ', d)
+        # d = re.sub(r'[^a-z ]', '', d)
+        # d = re.sub(r' +', ' ', d)
+        # words = d.split()
+        # ddict = defaultdict(lambda: 0)
+        # for word in words:
+        #     if word in vocab:
+        #         wordtoken = vocab[word]
+        #         ddict[wordtoken] += 1
+        # wordids.append(ddict.keys())
+        # wordcts.append(ddict.values())
 
     return wordids, wordcts
 
@@ -225,7 +254,7 @@ class OnlineLDA:
         # Do an E step to update gamma, phi | lambda for this
         # mini-batch. This also returns the information about phi that
         # we need to update lambda.
-        (gamma, sstats) = self.do_e_step(docs)
+        gamma, sstats = self.do_e_step(docs)
         # Estimate held-out likelihood for current values of lambda.
         bound = self.approx_bound(docs, gamma)
         # Update lambda based on documents.
