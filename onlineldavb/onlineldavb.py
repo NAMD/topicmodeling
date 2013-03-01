@@ -1,7 +1,9 @@
 # onlineldavb.py: Package of functions for fitting Latent Dirichlet
 # Allocation (LDA) with online variational Bayes (VB).
 #
-# Copyright (C) 2010  Matthew D. Hoffman
+# This code was initially developed by Matthew D. Hoffman as released under the GPL.
+#
+# It is now being developed and maintained by Flavio C. Coelho
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
