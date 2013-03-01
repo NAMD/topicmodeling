@@ -10,5 +10,6 @@ setup(
     license= "GPLv3",
     description="Set of tools for topic modeling and visualization",
     ext_modules=cythonize("visualization/*.pyx"),
-    package_dir={'word_cloud': '.'}
+    packages = ['onlineldavb','visualization','onlinehdp','tests'],
+    package_data={'tests': ['data/*']},
 )
