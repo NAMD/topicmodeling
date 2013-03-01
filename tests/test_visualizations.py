@@ -13,7 +13,7 @@ class TestTopicClouds(unittest.TestCase):
     def setUp(self):
         with open('../Topics/onlineldavb/dictnostops.txt') as f:
             self.vocab = f.read().split()
-        self.topics = np.loadtxt('../onlineldavb/lambda.dat')
+        self.topics = np.loadtxt('../Topics/onlineldavb/lambda.dat')
 
     def test_gencloud_class_really_produces_images(self):
         GC = topiccloud.GenCloud(self.vocab, self.topics)
