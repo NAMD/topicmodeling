@@ -67,6 +67,6 @@ class TestOnlineLDA(unittest.TestCase):
         D = 64
         olda = onlineldavb.OnlineLDA(vocab, K, D, 1./K, 1./K, 1024., 0.7)
         gamma, bound = olda.update_lambda(docs)
-        self. assertIsInstance(gamma, float)
-        self. assertIsInstance(bound, float)
+        self. assertIsInstance(gamma, np.ndarray)
+        self. assertIsInstance(bound, np.ndarray)
 

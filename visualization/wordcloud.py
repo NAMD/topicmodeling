@@ -34,7 +34,7 @@ def make_wordcloud(words, counts, fname, font_path=None, width=400, height=200,
         Defaults to DroidSansMono path.
 
     fname : sting
-        Output filename. Extension determins image type
+        Output filename. Extension determines image type
         (written with PIL).
 
     width : int (default=400)
