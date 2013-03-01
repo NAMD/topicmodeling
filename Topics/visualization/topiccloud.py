@@ -1,7 +1,7 @@
 #coding:utf8
 
 import numpy as np
-from wordcloud import make_wordcloud
+from Topics.visualization.wordcloud import make_wordcloud
 
 class GenCloud(object):
     def __init__(self, vocab, topics):

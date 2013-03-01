@@ -10,7 +10,7 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 import numpy as np
-from query_integral_image import query_integral_image
+from Topics.visualization import query_integral_image
 
 FONT_PATH = "/usr/share/fonts/truetype/droid/DroidSansMono.ttf"
 

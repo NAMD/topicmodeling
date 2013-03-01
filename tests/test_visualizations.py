@@ -2,9 +2,12 @@
 
 
 import unittest
-from visualization import topiccloud
-import numpy as np
 import os
+
+import numpy as np
+
+from Topics.visualization import topiccloud
+
 
 class TestTopicClouds(unittest.TestCase):
     def setUp(self):
