@@ -8,7 +8,7 @@ import os
 
 class TestTopicClouds(unittest.TestCase):
     def setUp(self):
-        with open('../onlineldavb/dictnostops.txt') as f:
+        with open('../Topics/onlineldavb/dictnostops.txt') as f:
             self.vocab = f.read().split()
         self.topics = np.loadtxt('../onlineldavb/lambda.dat')
 

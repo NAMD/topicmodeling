@@ -2,11 +2,13 @@
 
 
 import unittest
-from onlineldavb import onlineldavb
-from scipy.special import gammaln, psi
+import random
+
+from scipy.special import psi
 import numpy as np
 import numpy.testing as npt
-import random
+
+from Topics.onlineldavb import onlineldavb
 
 
 class TestOnlineLDA(unittest.TestCase):

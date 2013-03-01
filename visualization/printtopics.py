@@ -21,7 +21,6 @@
 import sys
 import numpy
 
-import onlineldavb
 
 def main():
     """
