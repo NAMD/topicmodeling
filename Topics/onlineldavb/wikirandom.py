@@ -32,20 +32,19 @@ def get_random_wikipedia_article():
         failed = False
         try:
             req = urllib2.Request('http://en.wikipedia.org/wiki/Special:Random',
-                                  None, { 'User-Agent' : 'x'})
+                                  None, {'User-Agent': 'x'})
             f = urllib2.urlopen(req)
             while not articletitle:
                 line = f.readline()
                 result = re.search(r'title="Edit this page" href="/w/index.php\?title=(.*)\&amp;action=edit" /\>', line)
-                if (result):
+                if result:
                     articletitle = result.group(1)
                     break
-                elif (len(line) < 1):
+                elif len(line) < 1:
                     sys.exit(1)
 
-            req = urllib2.Request('http://en.wikipedia.org/w/index.php?title=Special:Export/%s&action=submit' \
-                                      % (articletitle),
-                                  None, { 'User-Agent' : 'x'})
+            req = urllib2.Request('http://en.wikipedia.org/w/index.php?title=Special:Export/{0:s}&action=submit'
+                                  .format(articletitle), None, {'User-Agent': 'x'})
             f = urllib2.urlopen(req)
             all = f.read()
         except (urllib2.HTTPError, urllib2.URLError):
@@ -85,7 +84,7 @@ class WikiThread(threading.Thread):
     lock = threading.Lock()
 
     def run(self):
-        (article, articlename) = get_random_wikipedia_article()
+        article, articlename = get_random_wikipedia_article()
         WikiThread.lock.acquire()
         WikiThread.articles.append(article)
         WikiThread.articlenames.append(articlename)
@@ -98,9 +97,9 @@ def get_random_wikipedia_articles(n):
     get_random_wikipedia_article() serially.
     """
     maxthreads = 8
-    WikiThread.articles = list()
-    WikiThread.articlenames = list()
-    wtlist = list()
+    WikiThread.articles = []
+    WikiThread.articlenames = []
+    wtlist = []
     for i in range(0, n, maxthreads):
         print 'downloaded %d/%d articles...' % (i, n)
         for j in range(i, min(i+maxthreads, n)):
@@ -108,13 +107,13 @@ def get_random_wikipedia_articles(n):
             wtlist[len(wtlist)-1].start()
         for j in range(i, min(i+maxthreads, n)):
             wtlist[j].join()
-    return (WikiThread.articles, WikiThread.articlenames)
+    return WikiThread.articles, WikiThread.articlenames
 
 if __name__ == '__main__':
     t0 = time.time()
 
     (articles, articlenames) = get_random_wikipedia_articles(1)
-    for i in range(0, len(articles)):
+    for i in range(len(articles)):
         print articlenames[i]
 
     t1 = time.time()
