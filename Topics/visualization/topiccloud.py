@@ -14,11 +14,14 @@ class GenCloud(object):
         self.vocab = np.array(vocab)
         self.topics = topics
 
-    def gen_image(self, topic):
+    def gen_image(self, topic, fname='topic', width=600, height=400):
         """
         Generates and shows the image for the topic specified
+        :param width: width of the resulting image
+        :param height: height of the resulting image
+        :param fname: Name of the file with which to save the topic cloud images
         :param topic: Integer corresponding to the line of the topic matrix
         """
-        make_wordcloud(self.vocab, self.topics[topic], "topic_{}.png".format(topic), width=600, height=400)
+        make_wordcloud(self.vocab, self.topics[topic], "{}_{}.png".format(fname, topic), width, height)
 
 
