@@ -60,6 +60,6 @@ cloud = GenCloud(vocab,lamb)
 for i in range(K):
   cloud.gen_image(i)
 ```
-If you have done everything right you should see a figure just like this:
+If you have done everything right you should see 10 figures just like this:
 
 ![topic_cloud](https://raw.github.com/NAMD/topicmodeling/master/tests/topic_0.png?raw=true)
