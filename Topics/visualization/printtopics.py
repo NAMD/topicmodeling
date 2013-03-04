@@ -22,6 +22,24 @@ import sys
 import numpy
 
 
+def list_topics(vocab, testlambda):
+    """
+
+    :param vocab:
+    :param testlambda:
+    """
+    for k in range(0, len(testlambda)):
+        lambdak = list(testlambda[k, :])
+        lambdak /= sum(lambdak)
+        temp = zip(lambdak, range(0, len(lambdak)))
+        temp = sorted(temp, key=lambda x: x[0], reverse=True)
+        print 'topic {0:d}:'.format(k)
+        # feel free to change the "53" here to whatever fits your screen nicely.
+        for i in xrange(0, 53):
+            print '{0:>20s}  \t---\t  {1:.4f}'.format(vocab[temp[i][1]], temp[i][0])
+        print
+
+
 def main():
     """
     Displays topics fit by onlineldavb.py. The first column gives the
@@ -31,16 +49,8 @@ def main():
     vocab = str.split(file(sys.argv[1]).read())
     testlambda = numpy.loadtxt(sys.argv[2])
 
-    for k in range(0, len(testlambda)):
-        lambdak = list(testlambda[k, :])
-        lambdak = lambdak / sum(lambdak)
-        temp = zip(lambdak, range(0, len(lambdak)))
-        temp = sorted(temp, key = lambda x: x[0], reverse=True)
-        print 'topic %d:' % (k)
-        # feel free to change the "53" here to whatever fits your screen nicely.
-        for i in xrange(0, 53):
-            print '%20s  \t---\t  %.4f' % (vocab[temp[i][1]], temp[i][0])
-        print
+    list_topics(vocab, testlambda)
+
 
 if __name__ == '__main__':
     main()
