@@ -12,6 +12,6 @@ setup(
     description="Set of tools for topic modeling and visualization",
     ext_modules=cythonize("Topics/visualization/*.pyx"),
     packages=['Topics', 'Topics.onlineldavb', 'Topics.onlinehdp', 'Topics.visualization'],
-    install_requires=['numpy>=1.7.0', 'PIL>=1.1.7', 'cython>=0.18'],
+    install_requires=['numpy>=1.6.2', 'PIL>=1.1.7', 'cython>=0.18'],
     #    package_data={'tests': ['data/*']},
 )
