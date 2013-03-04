@@ -53,9 +53,13 @@ for doc in docset:
   perwordbound = bound * len(docset) / (D*sum(map(sum,wordcts)))
 np.savetxt('lambda.dat',olda._lambda)
 ```
+
 Finally you can visualize the resulting topics as a Word Cloud:
 ```python
 cloud = GenCloud(vocab,lamb)
 for i in range(K):
   cloud.gen_image(i)
 ```
+If you have done everything right you should see a figure just like this:
+
+(https://github.com/NAMD/topicmodeling/blob/master/tests/topic_0.png?raw=true)
