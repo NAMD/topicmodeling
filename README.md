@@ -39,7 +39,23 @@ Now, for every document in your corpus you can run the following code to define 
 checker.set_text(text)
 errors = [err.word for err in checker]
 vocab = [word.strip(punctuation) for word in nltk.wordpunct_tokenize(text) if word.strip(punctuation) not in sw+errors]
+vocab = list(set(vocab))
 ```
 Now that you have a vocabulary, which the union of all the vocabularies of each document, you can run the 
-LDA analysis.
-
+LDA analysis. You have to specify the number of topics you expect to find (K below)
+```python
+K=10
+D = 100 #Number of documents in the docset
+olda = onlineldavb.OnlineLDA(vocab, K, D, 1./K, 1./K, 1024, 0.7)
+for doc in docset:
+  gamma, bound = olda.update_lambda(doc)
+  wordids, wordcts = onlineldavb.parse_doc_list(doc,olda._vocab)
+  perwordbound = bound * len(docset) / (D*sum(map(sum,wordcts)))
+np.savetxt('lambda.dat',olda._lambda)
+```
+Finally you can visualize the resulting topics as a Word Cloud:
+```python
+cloud = GenCloud(vocab,lamb)
+for i in range(K):
+  cloud.gen_image(i)
+```
