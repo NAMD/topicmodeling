@@ -36,7 +36,10 @@ def list_topics(vocab, testlambda):
         print 'topic {0:d}:'.format(k)
         # feel free to change the "53" here to whatever fits your screen nicely.
         for i in xrange(0, 53):
+            # try:
             print u'{0:>20s}  \t---\t  {1:.4f}'.format(vocab[temp[i][1]], temp[i][0])
+            # except UnicodeEncodeError:
+            #     print temp[i][1]
         print
 
 
