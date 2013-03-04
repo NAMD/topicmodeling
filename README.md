@@ -62,4 +62,4 @@ for i in range(K):
 ```
 If you have done everything right you should see a figure just like this:
 
-(https://github.com/NAMD/topicmodeling/blob/master/tests/topic_0.png?raw=true)
+(https://raw.github.com/NAMD/topicmodeling/master/tests/topic_0.png?raw=true)
