@@ -21,15 +21,17 @@
 
 import turbotopics as tt
 import sys
+import codecs
 from pprint import *
 
 
 def compute(corpus_file, pvalue, use_perm, out_filename, stopw=None, min_count=5,
-         min_bigram_count=5, min_char_count=3):
+         min_bigram_count=5, min_char_count=3, encoding='utf-8'):
 
     """
     Recursively find collocations for a given corpus.  writes
     the marginal counts to a specified file
+    :param encoding: Encoding of the corpus file
     :param stopw: List of stopwords to apply to the analysis
     :param corpus_file: string with file name
     :param pvalue: self-explanatory
@@ -49,12 +51,14 @@ def compute(corpus_file, pvalue, use_perm, out_filename, stopw=None, min_count=5
         tt._stop_words = stopw
 
     ### read corpus
-    with open(corpus_file) as f:
+    with codecs.open(corpus_file, encoding=encoding) as f:
         corpus = f.readlines()
 
     ### set up recursive hypothesis tests
     lr = tt.LikelihoodRatio(pvalue=pvalue, use_perm=use_perm)
-    def iter_gen(): return(corpus)
+    def iter_gen():
+        for doc in corpus:
+            yield doc
     # note: some hidden defaults here, e.g., no numbers
     char_filter = tt.make_char_filter(min_char_count)
     def my_filter(w):

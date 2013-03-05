@@ -1,4 +1,5 @@
 #! /usr/bin/python
+# coding: utf-8
 
 # (C) Copyright 2009, David M. Blei (blei@cs.princeton.edu)
 
@@ -20,8 +21,9 @@
 # USA
 
 from __future__ import division
-import sys, re, random, copy, itertools
-from math import *
+import sys, random, copy, itertools
+import regex
+from math import pow, log, exp
 import nltk
 
 
@@ -34,6 +36,8 @@ _chi_sq_table = {0.1: 2.70554345,
                  0.0000001: 28.37399}
 
 _stop_words = nltk.corpus.stopwords.words('portuguese')#[v.strip() for v in file('stop_words.txt').readlines()]
+
+
 
 # -------------------------------------------------------------------------
 
@@ -64,11 +68,11 @@ class Counts:
         words = word_list(doc, self.vocab)
         for pos in range(len(words)):
             w = words[pos]
-            if (not root_filter(w)): continue
+            if not root_filter(w): continue
             self.marg[w] = self.marg.get(w, 0) + 1
             if (pos == len(words) - 1): break
             w_next = words[pos + 1]
-            if (not next_filter(w_next)): continue
+            if not next_filter(w_next): continue
             bigram_w = self.bigram.setdefault(w, {})
             bigram_w[w_next] = bigram_w.get(w_next, 0) + 1
             self.next_marg[w_next] = self.next_marg.get(w_next, 0) + 1
@@ -213,7 +217,7 @@ class ChiSq:
         :rtype : Dictionary
         :param count:
         :param marg:
-        :param bigram: frequency of bigram
+        :param bigram: dictionary with frequencies of bigram
         :param total:
         :param min_count: minimum frequency for bigram
         """
@@ -357,9 +361,8 @@ def sample_no_replace(total, table, nitems):
 
 def word_list(doc, vocab):
     """
-    input:
-    - document on a line
-    - vocabulary "machine", e.g.,
+    :param doc: document on a line
+    :param vocab: vocabulary "machine", e.g.,
       {'new':{'york':{}},
        'long':{'island': {'city':{}, 'railroad':{}}}})
 
@@ -389,25 +392,26 @@ def strip_text(text):
     """
     strips out all non alphabetic characters from a string,
     lower cases it, and removes extra whitespace characters.
+    :param text: Text to be stripped
     """
 
     text = text.lower()
-    text = re.sub("_", " ", text)
-    text = re.sub("[^A-Za-z0-9 ]", "", text)
-    text = re.sub("\s+", " ", text)
+    text = regex.sub(u"_", u" ", text)
+    text = regex.sub(ur"[^\p{L}\p{N} ]+", u"", text)
+    text = regex.sub(ur"\s+", u" ", text)
     text = text.strip()
-    return (text)
+    return text
 
 
 def words_from_vocab_machine(mach):
     "recursively generate all possible words from a vocabulary machine."
 
     words = []
-    for (v_1, next_mach) in mach.items():
+    for v_1, next_mach in mach.iteritems():
         words.append(v_1)
         words.extend(['%s %s' % (v_1, v_2)
-                      for v_2 in words_from_machine(next_mach)])
-    return (words)
+                      for v_2 in words_from_vocab_machine(next_mach)])
+    return words
 
 
 def nested_sig_bigrams(iter_generator, update_fun, sig_test, min):
@@ -415,6 +419,11 @@ def nested_sig_bigrams(iter_generator, update_fun, sig_test, min):
     finds nested significant bigrams.
     given a function to produce an iterator
     and a function to update the counts based on that iterator,
+    :rtype : Counts object
+    :param iter_generator: Generator function
+    :param update_fun: 
+    :param sig_test: 
+    :param min: 
     """
 
     sys.stdout.write("computing initial counts\n")
@@ -424,7 +433,7 @@ def nested_sig_bigrams(iter_generator, update_fun, sig_test, min):
     terms = [item[0] for item in
              sorted(counts.marg.items(), key=lambda x: -x[1])
              if item[1] >= min]
-    while (len(terms) > 0):
+    while terms:
         new_vocab = {}
         sig_test.reset()
         sys.stdout.write("analyzing %d terms\n" % len(terms))
@@ -438,12 +447,13 @@ def nested_sig_bigrams(iter_generator, update_fun, sig_test, min):
 
         # reset counts
         counts.reset_counts()
-        for doc in iter_generator(): update_fun(counts, doc)
+        for doc in iter_generator():
+            update_fun(counts, doc)
         terms = [item[0] for item in
                  sorted(new_vocab.items(), key=lambda x: -x[1])
                  if item[1] >= min]
 
-    return (counts)
+    return counts
 
 # -------------------------------------------------------------------------
 
@@ -468,7 +478,7 @@ def make_char_filter(n):
 
 
 def digit_filter(w):
-    if re.search("[0-9]", w):
+    if regex.search("[0-9]", w):
         return False
     else:
         return True
