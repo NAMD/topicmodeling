@@ -23,16 +23,34 @@ import turbotopics as tt
 import sys
 from pprint import *
 
-def main(corpus_file, pvalue, use_perm, out_filename, min_count=5,
+
+def compute(corpus_file, pvalue, use_perm, out_filename, stopw=None, min_count=5,
          min_bigram_count=5, min_char_count=3):
 
-    """recursively find collocations for a given corpus.  writes out
-    the marginal counts to a specified file"""
+    """
+    Recursively find collocations for a given corpus.  writes
+    the marginal counts to a specified file
+    :param stopw: List of stopwords to apply to the analysis
+    :param corpus_file: string with file name
+    :param pvalue: self-explanatory
+    :param use_perm: Boolean. Score by permutation
+    :param out_filename: file name to write into
+    :param min_count:
+    :param min_bigram_count:
+    :param min_char_count:
+    """
 
     sys.stdout.write("computing n-grams from %s\n" % corpus_file)
+    
+    if stopw is None:
+        tt._stop_words = []
+    else:
+        assert isinstance(stopw, list)
+        tt._stop_words = stopw
 
     ### read corpus
-    corpus = file(corpus_file).readlines()
+    with open(corpus_file) as f:
+        corpus = f.readlines()
 
     ### set up recursive hypothesis tests
     lr = tt.LikelihoodRatio(pvalue=pvalue, use_perm=use_perm)
@@ -49,13 +67,12 @@ def main(corpus_file, pvalue, use_perm, out_filename, min_count=5,
 
     ### write n-grams to file
     sys.stdout.write("writing to %s\n" % out_filename)
-    f = file(out_filename, 'w')
+    with open(out_filename, 'w') as f:
     # this can be adjusted to write out any information you need
-    [f.write('%s|%g\n' % (term, count)) for (term, count)
-      in sorted(cnts.marg.items(), key=lambda x:-x[1])]
-    f.close()
+        [f.write('%s|%g\n' % (term, count)) for (term, count) in sorted(cnts.marg.items(), key=lambda x:-x[1])]
 
-    return(cnts)
+
+    return cnts
 
 
 if __name__ == "__main__":
@@ -72,6 +89,6 @@ if __name__ == "__main__":
 
     (opt, args) = parser.parse_args()
 
-    main(corpus=opt.corpus, p_value=opt.p_value,
+    compute(corpus=opt.corpus, p_value=opt.p_value,
          use_perm_test=opt.use_perm, out_filename=opt.out_filename,
          min_count = opt.min_count)
