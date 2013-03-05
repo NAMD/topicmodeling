@@ -70,29 +70,31 @@ class Counts:
             w = words[pos]
             if not root_filter(w): continue
             self.marg[w] = self.marg.get(w, 0) + 1
-            if (pos == len(words) - 1): break
+            if pos == len(words) - 1: break
             w_next = words[pos + 1]
             if not next_filter(w_next): continue
             bigram_w = self.bigram.setdefault(w, {})
             bigram_w[w_next] = bigram_w.get(w_next, 0) + 1
             self.next_marg[w_next] = self.next_marg.get(w_next, 0) + 1
 
-
     def reset_counts(self):
-        "reset the counts"
+        """reset the counts"""
         self.marg = {}
         self.next_marg = {}
         self.bigram = {}
 
-
     def sig_bigrams(self, word, sig_test, min, recursive=True):
         """
         Compute significant bigrams from a word.
+        :param word:
+        :param sig_test:
+        :param min:
+        :param recursive:
         requires a significance tester object with:
         - score : (next_marg, next_bigram) -> [words->reals]
         - null_score : (next_marg, next_bigram, pvalue) -> null_value
         """
-        if (word not in self.bigram): return ({})
+        if word not in self.bigram: return ({})
         marg = copy.deepcopy(self.next_marg)
         bigram_w = copy.deepcopy(self.bigram.get(word, {}))
         marg_w = sum(bigram_w.values())
@@ -102,7 +104,7 @@ class Counts:
         scores = sig_test.score(marg_w, marg, bigram_w, total, min)
         scores = sorted(scores.items(), key=lambda x: -x[1])
         for (cand, max_score) in [s for s in scores if s[1] > 0]:
-            if (bigram_w[cand] < min): continue
+            if bigram_w[cand] < min: continue
             null_score = sig_test.null_score(marg_w, marg, total)
             out('%-20s: marg = [%6d, %6d]; bigram = %5d;' %
                 ("%s %s" % (word, cand), marg_w, marg[cand], bigram_w[cand]))
@@ -118,7 +120,7 @@ class Counts:
                 total = total - bigram_w[cand]
                 del (bigram_w[cand])
 
-        return (selected)
+        return selected
 
 # -------------------------------------------------------------------------
 
@@ -133,14 +135,19 @@ class LikelihoodRatio:
             self.null_score = self.null_score_chi_sq
 
     def reset(self):
-
-        "reset the permutation cache"
+        """reset the permutation cache"""
 
         self.perms = {}
 
 
     def score(self, count, unigram, bigram, total, min_count):
         """
+
+        :param count:
+        :param unigram:
+        :param bigram:
+        :param total:
+        :param min_count:
         input:
         - count of root word (scalar)
         - unigram counts of next word (dictionary)
@@ -152,14 +159,14 @@ class LikelihoodRatio:
         """
 
         def mylog(x):
-            if (x == 0): return (-1000000)
-            return (log(x))
+            if x == 0: return -1000000
+            return log(x)
 
         val = {}
         for v in bigram.keys():
             uni = unigram.get(v, 0)
             big = bigram.get(v, 0)
-            if (big < min_count): continue
+            if big < min_count: continue
             assert (uni >= big)
 
             log_pi_vu = mylog(big) - mylog(count)
@@ -173,13 +180,16 @@ class LikelihoodRatio:
                           uni * log_pi_v_old + \
                           (count - big) * (log_1mp_vu - log_1mp_v))
 
-            assert (val[v] == val[v]) # checks for nans
+            assert (val[v] == val[v])  # checks for nans
 
-        return (val)
-
+        return val
 
     def null_score_perm(self, count, marg, total):
-        "returns the maximum maximum-score achieved by a permutation"
+        """returns the maximum maximum-score achieved by a permutation
+        :param count:
+        :param marg:
+        :param total:
+        """
 
         perm_key = int(count / self.perm_hash)
         if (perm_key in self.perms): return (self.perms[perm_key])
@@ -196,12 +206,10 @@ class LikelihoodRatio:
         self.perms[perm_key] = max_score
         return (max_score)
 
-
     def null_score_chi_sq(self, count, marg, total):
+        """returns the chi squared null score"""
 
-        "returns the chi squared null score"
-
-        return (_chi_sq_table[self.pvalue])
+        return _chi_sq_table[self.pvalue]
 
 
 # -------------------------------------------------------------------------
@@ -238,7 +246,7 @@ class ChiSq:
     def null_score(self, count, marg, total):
         """returns the chi squared null score"""
 
-        return (_chi_sq_table[self.pvalue])
+        return _chi_sq_table[self.pvalue]
 
 
 # !!! note: we should do the permtest thing a bit better...
