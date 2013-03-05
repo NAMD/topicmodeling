@@ -22,6 +22,6 @@ class GenCloud(object):
         :param fname: Name of the file with which to save the topic cloud images
         :param topic: Integer corresponding to the line of the topic matrix
         """
-        make_wordcloud(words=self.vocab, counts=self.topics[topic], fname="{}_{}.png".format(fname, topic), width=width, height=height)
+        make_wordcloud(words=self.vocab, counts=self.topics[topic, :], fname="{}_{}.png".format(fname, topic), width=width, height=height)
 
 

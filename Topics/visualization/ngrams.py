@@ -71,9 +71,9 @@ def compute(corpus_file, pvalue, use_perm, out_filename, stopw=None, min_count=5
 
     ### write n-grams to file
     sys.stdout.write("writing to %s\n" % out_filename)
-    with open(out_filename, 'w') as f:
+    with codecs.open(out_filename, 'w', encoding='utf-8') as f:
     # this can be adjusted to write out any information you need
-        [f.write('%s|%g\n' % (term, count)) for (term, count) in sorted(cnts.marg.items(), key=lambda x:-x[1])]
+        [f.write(u'{0:s}|{1:g}\n'.format(term, count)) for (term, count) in sorted(cnts.marg.items(), key=lambda x:-x[1])]
 
 
     return cnts
