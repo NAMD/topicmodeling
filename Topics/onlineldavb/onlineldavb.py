@@ -117,6 +117,22 @@ def parse_doc_list(docs, vocab):
     return wordids, wordcts
 
 
+def save_assignments(wordids, lamb):
+    """
+    Save list of pairs word_id:topic for each document
+    in the docset used for LDA
+    :param wordids: List o lists of wordids for each document
+    :param lamb: Topic matrix resulting from OnlineLDA
+    :return:
+    """
+    with open('assign.csv', 'w') as f:
+        for wids in wordids:
+            ass = []
+            for n, l in enumerate(lamb):  #topics
+                ass.extend(['%s:%s'%(wid, n) for wid in wids])
+            f.write(' '.join(ass) + '\n')
+
+
 class OnlineLDA:
     """
     Implements online VB for LDA as described in (Hoffman et al. 2010).
