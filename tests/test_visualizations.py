@@ -30,4 +30,4 @@ class TestPrintTopics(unittest.TestCase):
 
     def test_list_topics_with_unicode_words(self):
         vocab = [u'\u3042' for i in range(self.topics.shape[1])]
-        list_topics(vocab,self.topics)
+        list_topics(vocab, self.topics)
