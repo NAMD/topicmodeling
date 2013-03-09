@@ -24,6 +24,7 @@ from __future__ import division
 import sys, random, copy, itertools
 import regex
 from math import pow, log, exp
+from multiprocessing import Pool
 import nltk
 
 
@@ -35,11 +36,9 @@ _chi_sq_table = {0.1: 2.70554345,
                  0.000001: 23.92813,
                  0.0000001: 28.37399}
 
-_stop_words = nltk.corpus.stopwords.words('portuguese')#[v.strip() for v in file('stop_words.txt').readlines()]
-
-
-
+_stop_words = []
 # -------------------------------------------------------------------------
+
 
 class Counts:
     """
@@ -55,24 +54,32 @@ class Counts:
     def __init__(self):
         self.vocab = {}
         self.reset_counts()
+        self.marg = {}
+        self.next_marg = {}
+        self.bigram = {}
 
-
-    def update_counts(self, doc, root_filter=lambda x: True,
-                      next_filter=lambda x: True):
+    def update_counts(self, doc, root_filter=lambda x: True, next_filter=lambda x: True):
         """
-        update the bigram and marginal counts with a line of text.
+        Updates the bigram and marginal counts with a line of text.
         takes two filter functions and does not count words or next
         words if they do not pass through the filter.  (e.g., the
         filter can be used to remove stop words.)
+
+        :param doc:
+        :param root_filter:
+        :param next_filter:
         """
         words = word_list(doc, self.vocab)
         for pos in range(len(words)):
             w = words[pos]
-            if not root_filter(w): continue
+            if not root_filter(w):
+                continue
             self.marg[w] = self.marg.get(w, 0) + 1
-            if pos == len(words) - 1: break
+            if pos == len(words) - 1:
+                break
             w_next = words[pos + 1]
-            if not next_filter(w_next): continue
+            if not next_filter(w_next):
+                continue
             bigram_w = self.bigram.setdefault(w, {})
             bigram_w[w_next] = bigram_w.get(w_next, 0) + 1
             self.next_marg[w_next] = self.next_marg.get(w_next, 0) + 1
@@ -85,8 +92,9 @@ class Counts:
 
     def sig_bigrams(self, word, sig_test, min, recursive=True):
         """
-        Compute significant bigrams from a word.
-        :param word:
+        Computes significant bigrams from a word.
+        :rtype : dict
+        :param word: Word contained in the bigram
         :param sig_test:
         :param min:
         :param recursive:
@@ -103,7 +111,7 @@ class Counts:
         out = sys.stdout.write
         scores = sig_test.score(marg_w, marg, bigram_w, total, min)
         scores = sorted(scores.items(), key=lambda x: -x[1])
-        for (cand, max_score) in [s for s in scores if s[1] > 0]:
+        for cand, max_score in [s for s in scores if s[1] > 0]:
             if bigram_w[cand] < min: continue
             null_score = sig_test.null_score(marg_w, marg, total)
             out('%-20s: marg = [%6d, %6d]; bigram = %5d;' %
@@ -142,7 +150,6 @@ class LikelihoodRatio:
 
     def score(self, count, unigram, bigram, total, min_count):
         """
-
         :param count:
         :param unigram:
         :param bigram:
@@ -192,7 +199,8 @@ class LikelihoodRatio:
         """
 
         perm_key = int(count / self.perm_hash)
-        if (perm_key in self.perms): return (self.perms[perm_key])
+        if perm_key in self.perms:
+            return self.perms[perm_key]
         max_score = 0
         nperm = int(1.0 / self.pvalue)
         table = sorted(marg.items(), key=lambda x: -x[1])
@@ -200,11 +208,11 @@ class LikelihoodRatio:
             perm_bigram = sample_no_replace(total, table, count)
             obs_score = self.score(count, marg, perm_bigram, total, 1)
             obs_score = max(obs_score.values())
-            if (obs_score > max_score or perm == 0):
+            if obs_score > max_score or perm == 0:
                 max_score = obs_score
 
         self.perms[perm_key] = max_score
-        return (max_score)
+        return max_score
 
     def null_score_chi_sq(self, count, marg, total):
         """returns the chi squared null score"""
@@ -252,7 +260,7 @@ class ChiSq:
 # !!! note: we should do the permtest thing a bit better...
 
 class MultTest:
-    "multinomial likelihood ratio significance test"
+    """multinomial likelihood ratio significance test"""
 
     def __init__(self, pvalue, use_perm, perm_hash=10):
         self.pvalue = pvalue
@@ -263,10 +271,14 @@ class MultTest:
         else:
             self.null_score = self.null_score_chi_sq
 
-
     def score(self, count, marg, bigram, total, min_count):
-        "returns the GOF test scores"
-
+        """returns the GOF test scores
+        :param count:
+        :param marg:
+        :param bigram:
+        :param total:
+        :param min_count:
+        """
         scores = {}
         n_u = count
         n = total
@@ -316,8 +328,12 @@ class MultTest:
 
 
     def null_score_chi_sq(self, count, marg, total):
-
-        "returns the chi squared null score"
+        """
+        returns the chi squared null score
+        :param count:
+        :param marg:
+        :param total:
+        """
 
         return (_chi_sq_table[self.pvalue])
 
@@ -331,12 +347,11 @@ def write_vocab(v, outfname, incl_stop=False):
     """writes a file of terms and counts
     :param v:
     :param outfname:
-    :param incl_stop:
+    :param incl_stop: Boolean. Wheter to include stopwords in the vocab file.
     """
 
     with open(outfname, 'w') as f:
-        [f.write('%-25s %8.2f\n' % (i[0], i[1])) for i in sorted(v.items(),
-                                                                 key=lambda x: -x[1])
+        [f.write('%-25s %8.2f\n' % (i[0], i[1])) for i in sorted(v.items(), key=lambda x: -x[1])
          if incl_stop or i[0] not in _stop_words]
 
 
@@ -348,6 +363,9 @@ def write_vocab(v, outfname, incl_stop=False):
 def sample_no_replace(total, table, nitems):
     """
     sample without replacement from a list of items and counts
+    :param total:
+    :param table:
+    :param nitems:
     """
 
     def nth_item_from_table(n):
@@ -364,7 +382,7 @@ def sample_no_replace(total, table, nitems):
     for n in sample:
         w = nth_item_from_table(n)
         count[w] = count.get(w, 0) + 1
-    return (count)
+    return count
 
 
 def word_list(doc, vocab):
@@ -382,15 +400,15 @@ def word_list(doc, vocab):
     singles = doc.split(' ')
     words = []
     pos = 0
-    while (pos < len(singles)):
+    while pos < len(singles):
         w = singles[pos]
         pos = pos + 1
         word = w
         state = vocab.setdefault(w, {})
         while pos < len(singles) and state.has_key(singles[pos]):
             state = state[singles[pos]]
-            word = word + ' ' + singles[pos]
-            pos = pos + 1
+            word += ' ' + singles[pos]
+            pos += 1
         words.append(word)
 
     return (words)
@@ -412,8 +430,11 @@ def strip_text(text):
 
 
 def words_from_vocab_machine(mach):
-    "recursively generate all possible words from a vocabulary machine."
-
+    """
+    Recursively generate all possible words from a vocabulary machine.
+    :rtype : list
+    :param mach: Dictionary
+    """
     words = []
     for v_1, next_mach in mach.iteritems():
         words.append(v_1)
@@ -422,7 +443,7 @@ def words_from_vocab_machine(mach):
     return words
 
 
-def nested_sig_bigrams(iter_generator, update_fun, sig_test, min):
+def nested_sig_bigrams(iter_generator, update_fun, sig_test, Min):
     """
     finds nested significant bigrams.
     given a function to produce an iterator
@@ -431,23 +452,27 @@ def nested_sig_bigrams(iter_generator, update_fun, sig_test, min):
     :param iter_generator: Generator function
     :param update_fun: 
     :param sig_test: 
-    :param min: 
+    :param Min:
     """
 
     sys.stdout.write("computing initial counts\n")
+    po = Pool()
     counts = Counts()
     for doc in iter_generator():
         update_fun(counts, doc)
     terms = [item[0] for item in
              sorted(counts.marg.items(), key=lambda x: -x[1])
-             if item[1] >= min]
+             if item[1] >= Min]
     while terms:
         new_vocab = {}
         sig_test.reset()
         sys.stdout.write("analyzing %d terms\n" % len(terms))
-        for v in terms:
-            sig_bigrams = counts.sig_bigrams(v, sig_test, min)
-            new_vocab.update(sig_bigrams)
+        args = [(v, sig_test, Min) for v in terms]
+        sig_bigrams = po.imap_unordered(counts.sig_bigrams, args)
+        new_vocab.update(sig_bigrams)
+        # for v in terms:
+        #     sig_bigrams = counts.sig_bigrams(v, sig_test, Min)
+        #     new_vocab.update(sig_bigrams)
 
         for selected in new_vocab.keys():
             sys.stdout.write("bigram : %s\n" % selected)
@@ -459,8 +484,9 @@ def nested_sig_bigrams(iter_generator, update_fun, sig_test, min):
             update_fun(counts, doc)
         terms = [item[0] for item in
                  sorted(new_vocab.items(), key=lambda x: -x[1])
-                 if item[1] >= min]
-
+                 if item[1] >= Min]
+    po.close()
+    po.join()
     return counts
 
 # -------------------------------------------------------------------------

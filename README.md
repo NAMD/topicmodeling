@@ -1,5 +1,5 @@
-topicmodeling
-=============
+#topicmodeling
+
 
 Library containing tools for topic modeling and related NLP tasks.
 
@@ -8,6 +8,10 @@ to help inspect the results.
 
 I have also added a fair ammount of tests, mainly to guide my refactoring of
 the code. Tests are still sparse, but will grow as the rest of the codebase sees more usage and refactoring.
+
+###Running the tests
+
+After you clone this repository, you can run the tests by going into the tests directory and running nosetests (nose required).
 
 Quick tutorial
 --------------
