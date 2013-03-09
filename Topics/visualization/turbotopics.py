@@ -24,8 +24,10 @@ from __future__ import division
 import sys, random, copy, itertools
 import regex
 from math import pow, log, exp
+import codecs
 from multiprocessing import Pool
 import nltk
+
 
 
 _chi_sq_table = {0.1: 2.70554345,
@@ -322,7 +324,7 @@ class MultTest:
             perm_bigram = sample_no_replace(total, table, count)
             obs_score = self.score(count, marg, perm_bigram, total, 1)
             obs_score = max(obs_score.values())
-            if (obs_score > max_score or perm == 0):
+            if obs_score > max_score or perm == 0:
                 max_score = obs_score
 
         self.perms[perm_key] = max_score
@@ -352,8 +354,8 @@ def write_vocab(v, outfname, incl_stop=False):
     :param incl_stop: Boolean. Wheter to include stopwords in the vocab file.
     """
 
-    with open(outfname, 'w') as f:
-        [f.write('%-25s %8.2f\n' % (i[0], i[1])) for i in sorted(v.items(), key=lambda x: -x[1])
+    with codecs.open(outfname, 'w', encoding='utf8') as f:
+        [f.write('%-25s | %8.2f\n' % (i[0], i[1])) for i in sorted(v.items(), key=lambda x: -x[1])
          if incl_stop or i[0] not in _stop_words]
 
 
@@ -404,7 +406,7 @@ def word_list(doc, vocab):
     pos = 0
     while pos < len(singles):
         w = singles[pos]
-        pos = pos + 1
+        pos += 1
         word = w
         state = vocab.setdefault(w, {})
         while pos < len(singles) and state.has_key(singles[pos]):
@@ -413,7 +415,7 @@ def word_list(doc, vocab):
             pos += 1
         words.append(word)
 
-    return (words)
+    return words
 
 
 def strip_text(text):
@@ -469,7 +471,8 @@ def nested_sig_bigrams(iter_generator, update_fun, sig_test, Min):
         new_vocab = {}
         sig_test.reset()
         sys.stdout.write("analyzing %d terms\n" % len(terms))
-        # args = [(v, sig_test, Min) for v in terms]
+
+        # args = [(counts, v, sig_test, Min) for v in terms]
         # sig_bigrams = po.imap_unordered(counts.sig_bigrams, args)
         # new_vocab.update(sig_bigrams)
         for v in terms:
@@ -491,10 +494,10 @@ def nested_sig_bigrams(iter_generator, update_fun, sig_test, Min):
     # po.join()
     return counts
 
-# -------------------------------------------------------------------------
 
+# -------------------------------------------------------------------------
 def update_vocab(word, vocab):
-    "updates a vocabulary transition machine with an n-gram"
+    """updates a vocabulary transition machine with an n-gram"""
     words = word.split()
     mach = vocab
     i = 0

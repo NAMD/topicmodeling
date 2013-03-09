@@ -202,7 +202,7 @@ class OnlineLDA:
             # expElogthetad_k * expElogbetad_w. phinorm is the normalizer.
             phinorm = np.dot(expElogthetad, expElogbetad) + 1e-100
             # Iterate between gamma and phi until convergence
-            for it in range(0, 100):
+            for it in range(100):
                 lastgamma = gammad
                 # We represent phi implicitly to save memory and time.
                 # Substituting the value of the optimal phi back into

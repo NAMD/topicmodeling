@@ -26,21 +26,26 @@
 
 # create turbo topics from the output of LDA C
 
-import turbotopics as tt, itertools, sys, re
+import turbotopics as tt
+import re
+from sys import stdout
+from itertools import izip
+
 
 def read_vocab(vocab_fname):
-
     "reads a vocabulary and returns a map of words to indices"
 
-    sys.stdout.write('reading vocabulary from %s\n' % vocab_fname)
+    stdout.write('reading vocabulary from %s\n' % vocab_fname)
     terms = file(vocab_fname).read().split('\n')
-    return(terms)
+    return (terms)
 
 
 def parse_word_assignments(assigns_fname, vocab):
     """
-    given a word assignments file and a list of words,
+    Given a word assignments file and a list of words,
     returns a list of dictionaries mapping words to topics
+    :param assigns_fname: Filename of file with assignment of terms to topics
+    :param vocab:
     """
     results = []
     for assign in file(assigns_fname):
@@ -48,7 +53,7 @@ def parse_word_assignments(assigns_fname, vocab):
         for (term, topic) in [x.split(':') for x in assign.split(' ')[1:]]:
             wordmap[vocab[int(term)]] = int(topic)
         results.append(wordmap)
-    return(results)
+    return results
 
 
 def update_counts_from_topic(doc, topicmap, topic, counts_obj):
@@ -61,20 +66,21 @@ def update_counts_from_topic(doc, topicmap, topic, counts_obj):
     """
     # the word filter looks if the first word is assigned to the topic
     if (topic not in topicmap.values()): return
-    root_filter = lambda w: topicmap.get(w.split()[0], -1)==topic
+    root_filter = lambda w: topicmap.get(w.split()[0], -1) == topic
     counts_obj.update_counts(doc, root_filter=root_filter)
 
 
 def turbo_topic(corpus, assigns, topic, use_perm=False, pvalue=0.1, min=25):
+    def iter_gen():
+        return izip(corpus, assigns)
 
-    def iter_gen(): return(itertools.izip(corpus, assigns))
     def update_fun(counts, doc):
         update_counts_from_topic(doc[0], doc[1], topic, counts)
 
     test = tt.LikelihoodRatio(pvalue, use_perm=use_perm)
     cnts = tt.nested_sig_bigrams(iter_gen, update_fun, test, min)
 
-    return(cnts)
+    return cnts
 
 
 if (__name__ == "__main__"):
@@ -85,7 +91,7 @@ if (__name__ == "__main__"):
     parser.add_option("--corpus", type="string", dest="corpus")
     parser.add_option("--assign", type="string", dest="assignments")
     parser.add_option("--vocab", type="string", dest="vocab")
-    parser.add_option("--perm",action="store_true", dest="use_perm")
+    parser.add_option("--perm", action="store_true", dest="use_perm")
     parser.add_option("--pval", type="float", dest="pvalue")
     parser.add_option("--out", type="string", dest="out")
     parser.add_option("--min-count", type="float", dest="min_count")
@@ -99,7 +105,7 @@ if (__name__ == "__main__"):
     corpus = file(opt.corpus).readlines()
 
     for topic in range(opt.ntopics):
-        sys.stdout.write('writing topic %d\n' % topic)
+        stdout.write('writing topic %d\n' % topic)
         sig_bigrams = turbo_topic(corpus, assigns, topic,
                                   use_perm=opt.use_perm,
                                   min=opt.min_count,

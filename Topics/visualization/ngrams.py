@@ -74,8 +74,8 @@ def compute(corpus_file, pvalue, use_perm, out_filename, stopw=None, min_count=5
     with codecs.open(out_filename, 'w', encoding='utf-8') as f:
     # this can be adjusted to write out any information you need
         [f.write(u'{0:s}|{1:g}\n'.format(term, count)) for (term, count) in sorted(cnts.marg.items(), key=lambda x:-x[1])]
-
-
+    print "Number of seleced bigrams: ", len(cnts.vocab)
+    tt.write_vocab(cnts.marg, 'ngram_counts.csv')
     return cnts
 
 
