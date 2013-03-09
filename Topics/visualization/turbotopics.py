@@ -90,29 +90,31 @@ class Counts:
         self.next_marg = {}
         self.bigram = {}
 
-    def sig_bigrams(self, word, sig_test, min, recursive=True):
+    def sig_bigrams(self, word, sig_test, Min, recursive=True):
         """
         Computes significant bigrams from a word.
         :rtype : dict
         :param word: Word contained in the bigram
         :param sig_test:
-        :param min:
+        :param Min:
         :param recursive:
         requires a significance tester object with:
         - score : (next_marg, next_bigram) -> [words->reals]
         - null_score : (next_marg, next_bigram, pvalue) -> null_value
         """
-        if word not in self.bigram: return ({})
+        if word not in self.bigram:
+            return {}
         marg = copy.deepcopy(self.next_marg)
         bigram_w = copy.deepcopy(self.bigram.get(word, {}))
         marg_w = sum(bigram_w.values())
         total = sum(marg.values())
         selected = {}
         out = sys.stdout.write
-        scores = sig_test.score(marg_w, marg, bigram_w, total, min)
+        scores = sig_test.score(marg_w, marg, bigram_w, total, Min)
         scores = sorted(scores.items(), key=lambda x: -x[1])
         for cand, max_score in [s for s in scores if s[1] > 0]:
-            if bigram_w[cand] < min: continue
+            if bigram_w[cand] < Min:
+                continue
             null_score = sig_test.null_score(marg_w, marg, total)
             out('%-20s: marg = [%6d, %6d]; bigram = %5d;' %
                 ("%s %s" % (word, cand), marg_w, marg[cand], bigram_w[cand]))
@@ -124,9 +126,9 @@ class Counts:
                 selected[new_word] = bigram_w[cand]
                 out(' selected *\n')
             if recursive:
-                marg_w = marg_w - bigram_w[cand]
-                total = total - bigram_w[cand]
-                del (bigram_w[cand])
+                marg_w -= bigram_w[cand]
+                total -= bigram_w[cand]
+                del(bigram_w[cand])
 
         return selected
 
@@ -456,7 +458,7 @@ def nested_sig_bigrams(iter_generator, update_fun, sig_test, Min):
     """
 
     sys.stdout.write("computing initial counts\n")
-    po = Pool()
+    # po = Pool()
     counts = Counts()
     for doc in iter_generator():
         update_fun(counts, doc)
@@ -467,12 +469,12 @@ def nested_sig_bigrams(iter_generator, update_fun, sig_test, Min):
         new_vocab = {}
         sig_test.reset()
         sys.stdout.write("analyzing %d terms\n" % len(terms))
-        args = [(v, sig_test, Min) for v in terms]
-        sig_bigrams = po.imap_unordered(counts.sig_bigrams, args)
-        new_vocab.update(sig_bigrams)
-        # for v in terms:
-        #     sig_bigrams = counts.sig_bigrams(v, sig_test, Min)
-        #     new_vocab.update(sig_bigrams)
+        # args = [(v, sig_test, Min) for v in terms]
+        # sig_bigrams = po.imap_unordered(counts.sig_bigrams, args)
+        # new_vocab.update(sig_bigrams)
+        for v in terms:
+            sig_bigrams = counts.sig_bigrams(v, sig_test, Min)
+            new_vocab.update(sig_bigrams)
 
         for selected in new_vocab.keys():
             sys.stdout.write("bigram : %s\n" % selected)
@@ -485,8 +487,8 @@ def nested_sig_bigrams(iter_generator, update_fun, sig_test, Min):
         terms = [item[0] for item in
                  sorted(new_vocab.items(), key=lambda x: -x[1])
                  if item[1] >= Min]
-    po.close()
-    po.join()
+    # po.close()
+    # po.join()
     return counts
 
 # -------------------------------------------------------------------------
