@@ -353,9 +353,10 @@ def write_vocab(v, outfname, incl_stop=False):
     :param outfname:
     :param incl_stop: Boolean. Wheter to include stopwords in the vocab file.
     """
-
+    if not v:  # if dictionary is empty
+        return
     with codecs.open(outfname, 'w', encoding='utf8') as f:
-        [f.write('%-25s | %8.2f\n' % (i[0], i[1])) for i in sorted(v.items(), key=lambda x: -x[1])
+        [f.write('%-25s | %8.2f\n' % (i[0].strip(), i[1])) for i in sorted(v.items(), key=lambda x: -x[1])
          if incl_stop or i[0] not in _stop_words]
 
 

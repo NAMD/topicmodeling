@@ -33,11 +33,13 @@ from itertools import izip
 
 
 def read_vocab(vocab_fname):
-    "reads a vocabulary and returns a map of words to indices"
-
+    """reads a vocabulary and returns a map of words to indices
+    :param vocab_fname: file name for vocabulary list
+    """
     stdout.write('reading vocabulary from %s\n' % vocab_fname)
-    terms = file(vocab_fname).read().split('\n')
-    return (terms)
+    with open(vocab_fname) as f:
+        terms = f.read().split('\n')
+    return terms
 
 
 def parse_word_assignments(assigns_fname, vocab):
@@ -45,27 +47,29 @@ def parse_word_assignments(assigns_fname, vocab):
     Given a word assignments file and a list of words,
     returns a list of dictionaries mapping words to topics
     :param assigns_fname: Filename of file with assignment of terms to topics
-    :param vocab:
+    :param vocab: list with vocabulary
     """
     results = []
-    for assign in file(assigns_fname):
-        wordmap = {}
-        for (term, topic) in [x.split(':') for x in assign.split(' ')[1:]]:
-            wordmap[vocab[int(term)]] = int(topic)
-        results.append(wordmap)
+    with open(assigns_fname) as f:
+        for assign in f:
+            wordmap = {}
+            for (term, topic) in [x.split(':') for x in assign.split(' ')[1:]]:
+                wordmap[vocab[int(term)]] = int(topic)
+            results.append(wordmap)
     return results
 
 
 def update_counts_from_topic(doc, topicmap, topic, counts_obj):
     """
     updates the counts of a counts object from a
-    - doc : line of text
-    - topicmap : mapping of words to topics
-    - topic : integer of the topic to focus on
-    - counts_obj : counts object to update
+    :param doc: line of text
+    :param topicmap: mapping of words to topics
+    :param topic: integer of the topic to focus on
+    :param counts_obj: counts object to update
     """
     # the word filter looks if the first word is assigned to the topic
-    if (topic not in topicmap.values()): return
+    if topic not in topicmap.values():
+        return
     root_filter = lambda w: topicmap.get(w.split()[0], -1) == topic
     counts_obj.update_counts(doc, root_filter=root_filter)
 
@@ -83,7 +87,7 @@ def turbo_topic(corpus, assigns, topic, use_perm=False, pvalue=0.1, min=25):
     return cnts
 
 
-if (__name__ == "__main__"):
+if __name__ == "__main__":
 
     from optparse import *
 

@@ -4,7 +4,7 @@ from Cython.Build import cythonize
 
 setup(
     name='Topics',
-    version="0.2.4",
+    version="0.2.5",
     author='Flávio C. Coelho',
     author_email="fccoelho@gmail.com",
     license="GPLv3",
