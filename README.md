@@ -107,3 +107,7 @@ ngcloud.gen_image(0,'ngrams')
 ```
 
 if we want to include only the ngrams with more than one word, we can remove those from the dictionary *ng*, above.
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/NAMD/topicmodeling/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
